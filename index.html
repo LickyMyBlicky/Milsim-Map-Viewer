@@ -2924,5 +2924,52 @@
     // Initial layout
     updateUILayout();
   </script>
+    <!-- your existing HTML code here -->
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Show only once per browser (per device)
+      if (localStorage.getItem('uiScaleNoticeShown') === 'true') return;
+
+      // Create banner container
+      const banner = document.createElement('div');
+      banner.style.position = 'fixed';
+      banner.style.top = '0';
+      banner.style.left = '0';
+      banner.style.right = '0';
+      banner.style.zIndex = '9999';
+      banner.style.padding = '10px 16px';
+      banner.style.backgroundColor = '#222';
+      banner.style.color = '#fff';
+      banner.style.fontFamily = 'sans-serif';
+      banner.style.fontSize = '14px';
+      banner.style.display = 'flex';
+      banner.style.justifyContent = 'space-between';
+      banner.style.alignItems = 'center';
+      banner.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
+
+      const message = document.createElement('span');
+      message.textContent = 'Tip: For best results, set the initial UI scale to 0.5 in the settings.';
+      banner.appendChild(message);
+
+      const button = document.createElement('button');
+      button.textContent = 'Got it';
+      button.style.marginLeft = '16px';
+      button.style.padding = '4px 10px';
+      button.style.border = 'none';
+      button.style.borderRadius = '4px';
+      button.style.cursor = 'pointer';
+      button.style.fontSize = '13px';
+      button.onclick = function () {
+        localStorage.setItem('uiScaleNoticeShown', 'true');
+        banner.remove();
+      };
+      banner.appendChild(button);
+
+      document.body.appendChild(banner);
+    });
+    </script>
+
 </body>
 </html>
+
