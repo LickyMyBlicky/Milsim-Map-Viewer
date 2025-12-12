@@ -771,6 +771,11 @@
       <input type="number" id="arrowWidthInput" min="1" max="20" value="8" />
     </label>
 
+    <label>
+      Pen Color:
+      <input type="color" id="penColorInput" value="#ff0000" />
+    </label>
+
     <span id="measureInfo"></span>
 
     <div id="helpMenuWrapper">
@@ -919,6 +924,7 @@
 
     const penWidthInput = document.getElementById("penWidthInput");
     const arrowWidthInput = document.getElementById("arrowWidthInput");
+    const penColorInput = document.getElementById("penColorInput");
     const measureInfo = document.getElementById("measureInfo");
 
     const symbolButtons = document.querySelectorAll(".symbol-btn");
@@ -1004,6 +1010,9 @@
     let penLineWidth = 8;
     let arrowLineWidth = 8;
     const CIRCLE_LINE_WIDTH = 15;
+
+    // Pen color (applies to new Pen strokes)
+    let penColor = "#ff0000";
 
     // Strokes
     let strokes = [];
@@ -1180,6 +1189,14 @@
       const v = parseFloat(arrowWidthInput.value);
       if (v > 0 && v <= 50) {
         arrowLineWidth = v;
+      }
+    });
+
+    penColorInput.addEventListener("input", () => {
+      if (penColorInput.value) {
+        penColor = penColorInput.value;
+        // Re-draw so any preview uses the new color
+        redrawStrokes();
       }
     });
 
@@ -2046,6 +2063,7 @@
           type: "pen",
           width: penLineWidth,
           points: penPoints.slice(),
+          color: penColor, // store the color used at creation time
         };
         strokes.push(stroke);
         if (!isUndoing) {
@@ -2064,38 +2082,53 @@
       strokes.forEach((stroke) => {
         const type = stroke.type || "polyline";
         const selected = selectedStrokes.has(stroke);
-        const baseColor =
-          type === "circle"
-            ? selected
-              ? "rgba(0,255,255,0.9)"
-              : "rgba(148,0,211,0.9)" // violet
-            : selected
-            ? "rgba(0,255,255,0.9)"
-            : "rgba(255,0,0,0.9)"; // red
 
         if (type === "circle") {
+          // Circles: fixed violet unless selected (cyan)
           if (!stroke.center || !stroke.radius) return;
           const w = stroke.width || CIRCLE_LINE_WIDTH;
           const c = stroke.center;
           const r = stroke.radius;
+          const color = selected
+            ? "rgba(0,255,255,0.9)"
+            : "rgba(148,0,211,0.9)"; // violet
+
           ctx.save();
-          ctx.strokeStyle = baseColor;
+          ctx.strokeStyle = color;
           ctx.lineWidth = w;
           ctx.beginPath();
           ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
         } else if (type === "arrow") {
+          // Arrows: fixed red unless selected (cyan)
           const pts = stroke.points;
           if (!pts || pts.length < 2) return;
           const w = stroke.width || arrowLineWidth;
-          drawArrowStroke(ctx, pts, w, baseColor);
+          const color = selected
+            ? "rgba(0,255,255,0.9)"
+            : "rgba(255,0,0,0.9)"; // red
+          drawArrowStroke(ctx, pts, w, color);
         } else {
+          // Pen / generic polylines
           const pts = stroke.points;
           if (!pts || pts.length < 2) return;
           const w = stroke.width || penLineWidth;
+
+          let color;
+          if (selected) {
+            // Selected pen or line = cyan
+            color = "rgba(0,255,255,0.9)";
+          } else if (type === "pen") {
+            // Pen uses its own stored color or current penColor fallback
+            color = stroke.color || penColor;
+          } else {
+            // Generic line tool stays red
+            color = "rgba(255,0,0,0.9)";
+          }
+
           ctx.save();
-          ctx.strokeStyle = baseColor;
+          ctx.strokeStyle = color;
           ctx.lineWidth = w;
           ctx.lineJoin = "round";
           ctx.lineCap = "round";
@@ -2197,7 +2230,7 @@
       if (penPoints.length < 2) return;
       const ctx = drawCanvas.getContext("2d");
       ctx.save();
-      ctx.strokeStyle = "rgba(255,0,0,0.9)";
+      ctx.strokeStyle = penColor; // use current pen color
       ctx.lineWidth = penLineWidth;
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
@@ -2983,20 +3016,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
